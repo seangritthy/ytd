@@ -241,6 +241,23 @@
     </button>
   </nav>
 
+  <!-- In-App Video & Audio Player Modal -->
+  <div id="player-modal" class="player-modal" style="display:none;">
+    <div class="player-content">
+      <div class="player-header">
+        <h4 id="player-title">Playing File</h4>
+        <div class="player-header-actions">
+          <button id="external-play-btn" class="ext-btn">External App</button>
+          <button id="close-player-btn" class="close-player-btn">&times;</button>
+        </div>
+      </div>
+      <div class="media-container">
+        <video id="inapp-video" controls autoplay style="display:none; width:100%; max-height:65vh; border-radius:12px;"></video>
+        <audio id="inapp-audio" controls autoplay style="display:none; width:100%; margin-top:20px;"></audio>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

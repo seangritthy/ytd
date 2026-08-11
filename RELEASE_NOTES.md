@@ -1,5 +1,9 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.2
+- **In-App Media Player**: Built-in full-screen video and audio player modal directly in the app (plays any downloaded file instantly without needing external apps).
+- **YtdFileProvider Integration**: Added ContentProvider URI support and read permissions for external player apps.
+
 ## Version 1.0.1
 - **Enhanced Stream Extractor Engine**: Automatic URL scheme normalization and guaranteed non-empty format stream extraction.
 - **Improved Compatibility**: Reliable fallback stream generation for YouTube, Facebook, TikTok, Instagram, Twitter/X, and custom links.

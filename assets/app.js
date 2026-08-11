@@ -297,6 +297,57 @@
     }
   };
 
+  // In-App Player Modal Setup
+  const playerModal = document.getElementById('player-modal');
+  const playerTitle = document.getElementById('player-title');
+  const closePlayerBtn = document.getElementById('close-player-btn');
+  const externalPlayBtn = document.getElementById('external-play-btn');
+  const inappVideo = document.getElementById('inapp-video');
+  const inappAudio = document.getElementById('inapp-audio');
+  let activePlayingPath = null;
+
+  if (closePlayerBtn) {
+    closePlayerBtn.addEventListener('click', closeMediaPlayer);
+  }
+
+  if (externalPlayBtn) {
+    externalPlayBtn.addEventListener('click', () => {
+      if (activePlayingPath && window.AndroidBridge && window.AndroidBridge.openFile) {
+        window.AndroidBridge.openFile(activePlayingPath);
+      }
+    });
+  }
+
+  function openMediaPlayer(f) {
+    activePlayingPath = f.path;
+    playerTitle.innerText = f.name;
+    const fileUrl = f.path.startsWith("file://") ? f.path : "file://" + f.path;
+
+    if (f.isAudio) {
+      inappVideo.style.display = 'none';
+      inappVideo.pause();
+      inappAudio.src = fileUrl;
+      inappAudio.style.display = 'block';
+      inappAudio.play().catch(() => {});
+    } else {
+      inappAudio.style.display = 'none';
+      inappAudio.pause();
+      inappVideo.src = fileUrl;
+      inappVideo.style.display = 'block';
+      inappVideo.play().catch(() => {});
+    }
+
+    playerModal.style.display = 'flex';
+  }
+
+  function closeMediaPlayer() {
+    inappVideo.pause();
+    inappAudio.pause();
+    inappVideo.src = '';
+    inappAudio.src = '';
+    playerModal.style.display = 'none';
+  }
+
   // Files tab loader
   function loadFilesList() {
     if (window.AndroidBridge && window.AndroidBridge.getDownloadedFiles) {
@@ -340,11 +391,7 @@
       `;
 
       item.querySelector('.play-btn').addEventListener('click', () => {
-        if (window.AndroidBridge && window.AndroidBridge.openFile) {
-          window.AndroidBridge.openFile(f.path);
-        } else {
-          showToast("Playing: " + f.name);
-        }
+        openMediaPlayer(f);
       });
 
       item.querySelector('.del-btn').addEventListener('click', () => {

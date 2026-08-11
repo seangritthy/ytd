@@ -164,16 +164,21 @@ public class DownloadService {
     public void openFile(String path) {
         try {
             File file = new File(path);
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            String extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(file).toString());
-            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
-            if (mimeType == null) mimeType = "video/*";
+            if (!file.exists()) {
+                Toast.makeText(context, "File does not exist: " + path, Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            intent.setDataAndType(Uri.fromFile(file), mimeType);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Uri contentUri = Uri.parse("content://com.ytd.downloader.fileprovider" + file.getAbsolutePath());
+            String mimeType = file.getName().toLowerCase().endsWith(".mp3") ? "audio/*" : "video/*";
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(contentUri, mimeType);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         } catch (Exception e) {
-            Toast.makeText(context, "No app found to play this file", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            Toast.makeText(context, "Cannot open file externally: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
