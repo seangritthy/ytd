@@ -49,7 +49,9 @@ public class DownloadService {
                     if (sanitizedTitle.length() > 50) sanitizedTitle = sanitizedTitle.substring(0, 50);
                     
                     String ext = "mp4";
-                    if ("mp3".equalsIgnoreCase(format) || title.toLowerCase().contains("mp3")) {
+                    if ("apk".equalsIgnoreCase(format) || title.toLowerCase().endsWith(".apk") || videoUrl.toLowerCase().contains(".apk")) {
+                        ext = "apk";
+                    } else if ("mp3".equalsIgnoreCase(format) || title.toLowerCase().contains("mp3")) {
                         ext = "mp3";
                     } else if (videoUrl.contains(".m3u8")) {
                         ext = "m3u8";
@@ -191,8 +193,19 @@ public class DownloadService {
         try {
             File file = new File(path);
             if (!file.exists()) {
-                Toast.makeText(context, "APK file not found", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "APK file not found: " + path, Toast.LENGTH_SHORT).show();
                 return;
+            }
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                if (!context.getPackageManager().canRequestPackageInstalls()) {
+                    Toast.makeText(context, "Please enable unknown app sources permission for YTD Pro", Toast.LENGTH_LONG).show();
+                    Intent settingsIntent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                    settingsIntent.setData(Uri.parse("package:" + context.getPackageName()));
+                    settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(settingsIntent);
+                    return;
+                }
             }
 
             Uri apkUri = Uri.parse("content://com.ytd.downloader.fileprovider" + file.getAbsolutePath());

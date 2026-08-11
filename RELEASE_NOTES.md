@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.6
+- **Fixed Update APK File Extension**: Corrected `DownloadService` file extension selection so update installers save as `.apk` files instead of `.mp4`.
+- **Unknown Sources Permission Handler**: Automatically opens Android `ACTION_MANAGE_UNKNOWN_APP_SOURCES` settings screen if unknown sources permission is needed for installation.
+- **Reliable In-App Installer Launch**: `onDownloadComplete` automatically launches the package installer as soon as update downloads finish.
+
 ## Version 1.0.5
 - **Fixed HTML5 Media Playback Error**: Added `localfile` scheme stream interceptor in `MainActivity.java` to bypass Android WebView file origin restrictions.
 - **Automatic Player Fallback**: In-app media player automatically delegates to external system player if video playback encounters unsupported codecs.

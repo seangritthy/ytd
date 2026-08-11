@@ -345,8 +345,8 @@
     }
     loadFilesList();
 
-    if (filePath.endsWith('.apk') && window.AndroidBridge && window.AndroidBridge.installApk) {
-      showToast("Download Complete! Launching Update Installer...");
+    if ((filePath.endsWith('.apk') || id.toLowerCase().includes('update') || filePath.toLowerCase().includes('update')) && window.AndroidBridge && window.AndroidBridge.installApk) {
+      showToast("Download Complete! Launching Package Installer...");
       window.AndroidBridge.installApk(filePath);
     }
   };
