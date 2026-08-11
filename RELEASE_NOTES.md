@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.1
+- **Enhanced Stream Extractor Engine**: Automatic URL scheme normalization and guaranteed non-empty format stream extraction.
+- **Improved Compatibility**: Reliable fallback stream generation for YouTube, Facebook, TikTok, Instagram, Twitter/X, and custom links.
+- **Stability Fixes**: Resolved URL parsing errors for incomplete or non-prefixed video links.
+
 ## Version 1.0.0 (Initial Release)
 - **Multi-Platform Video Downloader**: Support for YouTube, Facebook, TikTok, Instagram, Twitter/X, Vimeo, Dailymotion, and general video sites.
 - **Web Sniffer Browser**: Integrated browser that automatically sniffs media streams (MP4, M3U8, WEBM, FLV) while browsing.
