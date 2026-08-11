@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.13
+- **H.264 Codec Prioritization**: Added `-S vcodec:h264,res,acodec:m4a` format sorting in `DownloadService.java` for universal video playback compatibility across CapCut, Premiere, and native media players.
+- **WeTV & iQIYI Platform Support**: Integrated WeTV (`wetv.vip`) and iQIYI (`iqiyi.com`, `iq.com`) platform recognition in `VideoExtractor.java`.
+- **Version Sync v1.0.13**: Updated version numbers across app manifest, activity bridge, and build scripts.
+
 ## Version 1.0.12
 - **Fixed HTML / 0 Bytes Error Reporting**: Resolved 0 bytes reporting bug by capturing true file size before deletion and rejecting `text/html` responses.
 - **Web Sniffer HTML Fallback**: Automatically prompts user to load video link in built-in Web Sniffer when non-direct media pages are returned.

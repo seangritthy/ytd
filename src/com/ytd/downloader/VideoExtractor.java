@@ -199,6 +199,14 @@ public class VideoExtractor {
         return url.contains("twitter.com") || url.contains("x.com");
     }
 
+    public static boolean isWeTV(String url) {
+        return url.contains("wetv.vip") || url.contains("v.qq.com");
+    }
+
+    public static boolean isiQIYI(String url) {
+        return url.contains("iqiyi.com") || url.contains("iq.com");
+    }
+
     private static VideoItem extractYouTube(String inputUrl, VideoItem item) {
         item.platform = "YouTube";
         String videoId = extractYouTubeId(inputUrl);

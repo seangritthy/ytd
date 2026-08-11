@@ -278,7 +278,7 @@ public class MainActivity extends Activity {
             try {
                 return "v" + getPackageManager().getPackageInfo(getPackageName(), 0).versionName + " Pro Edition";
             } catch (Exception e) {
-                return "v1.0.12 Pro Edition";
+                return "v1.0.13 Pro Edition";
             }
         }
 

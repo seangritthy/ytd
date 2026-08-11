@@ -96,7 +96,9 @@ public class DownloadService {
             cmd.add("yt_dlp");
             cmd.add("--no-warnings");
             cmd.add("-f");
-            cmd.add("best[ext=mp4]/best");
+            cmd.add("best[ext=mp4]/bestvideo+bestaudio/best");
+            cmd.add("-S");
+            cmd.add("vcodec:h264,res,acodec:m4a");
             cmd.add("-o");
             cmd.add(outputFile.getAbsolutePath());
             cmd.add(targetUrl);
