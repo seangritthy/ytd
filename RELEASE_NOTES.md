@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.10
+- **Playlist & Batch Link Recognition**: Added playlist and channel link parsing support (`playlist?list=`, `/shorts/`, `/live/`) in `VideoExtractor.java`.
+- **Enhanced Media Extractor**: Expanded multi-site support for Vimeo, Dailymotion, TikTok, Instagram Reels, and Twitter/X streams.
+- **Version Sync v1.0.10**: Updated version numbers across app manifest, activity bridge, and build scripts.
+
 ## Version 1.0.9
 - **High-Speed Stream Buffer**: Upgraded stream download buffer to 16KB in `DownloadService.java` for faster download throughput on large video files.
 - **Improved YouTube Stream Extractor**: Optimized format prioritization in `VideoExtractor.java` to favor combined audio/video streams and clean quality labels.
