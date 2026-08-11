@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.8
+- **Enhanced In-App Package Installer & ContentProvider**: Implemented OpenableColumns query interface in `YtdFileProvider.java` for seamless Android PackageInstaller compatibility.
+- **HTTP 301/302 Redirect Loop Engine**: Added multi-redirect handling in `DownloadService.java` to support GitHub release CDN links (`objects.githubusercontent.com`).
+- **Updater & Version Sync v1.0.8**: Updated version tracking in `AndroidManifest.xml`, `MainActivity.java`, and `assets/app.js` for instant 1-click updates.
+
 ## Version 1.0.7
 - **High-Speed Native Downloader Engine**: Integrated native background `yt-dlp` downloader into `DownloadService.java` for high-speed multi-threaded video downloads (300MB+ movies).
 - **HTTP Error & Fake File Rejection**: Automatically rejects HTTP 403 / 400 error HTML pages (~1.1 MB) and deletes invalid stream files.

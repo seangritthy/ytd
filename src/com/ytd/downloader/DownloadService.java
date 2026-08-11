@@ -139,12 +139,30 @@ public class DownloadService {
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(15000);
             connection.setReadTimeout(30000);
+            connection.setInstanceFollowRedirects(true);
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
             connection.setRequestProperty("Accept", "*/*");
             connection.setRequestProperty("Connection", "keep-alive");
             connection.connect();
 
             int responseCode = connection.getResponseCode();
+            int redirectCount = 0;
+            while ((responseCode == HttpURLConnection.HTTP_MOVED_TEMP || responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_SEE_OTHER || responseCode == 307 || responseCode == 308) && redirectCount < 10) {
+                String newUrl = connection.getHeaderField("Location");
+                if (newUrl == null || newUrl.isEmpty()) break;
+                connection.disconnect();
+                url = new URL(newUrl);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(30000);
+                connection.setInstanceFollowRedirects(true);
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+                connection.setRequestProperty("Accept", "*/*");
+                connection.connect();
+                responseCode = connection.getResponseCode();
+                redirectCount++;
+            }
+
             if (responseCode >= 400) {
                 throw new Exception("HTTP Error " + responseCode + " - Link expired or restricted");
             }

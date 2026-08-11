@@ -40,7 +40,31 @@ public class YtdFileProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        return null;
+        try {
+            File file = new File(uri.getPath());
+            if (!file.exists()) return null;
+
+            String[] cols = projection != null ? projection : new String[]{
+                    android.provider.OpenableColumns.DISPLAY_NAME,
+                    android.provider.OpenableColumns.SIZE
+            };
+            android.database.MatrixCursor cursor = new android.database.MatrixCursor(cols);
+            Object[] row = new Object[cols.length];
+            for (int i = 0; i < cols.length; i++) {
+                if (android.provider.OpenableColumns.DISPLAY_NAME.equals(cols[i])) {
+                    row[i] = file.getName();
+                } else if (android.provider.OpenableColumns.SIZE.equals(cols[i])) {
+                    row[i] = file.length();
+                } else {
+                    row[i] = null;
+                }
+            }
+            cursor.addRow(row);
+            return cursor;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
