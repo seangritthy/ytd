@@ -379,23 +379,55 @@
     });
   }
 
+  if (inappVideo) {
+    inappVideo.onerror = function() {
+      if (activePlayingPath && window.AndroidBridge && window.AndroidBridge.openFile) {
+        showToast("Opening in external video player...");
+        window.AndroidBridge.openFile(activePlayingPath);
+        closeMediaPlayer();
+      }
+    };
+  }
+
+  if (inappAudio) {
+    inappAudio.onerror = function() {
+      if (activePlayingPath && window.AndroidBridge && window.AndroidBridge.openFile) {
+        showToast("Opening in external audio player...");
+        window.AndroidBridge.openFile(activePlayingPath);
+        closeMediaPlayer();
+      }
+    };
+  }
+
   function openMediaPlayer(f) {
     activePlayingPath = f.path;
     playerTitle.innerText = f.name;
-    const fileUrl = f.path.startsWith("file://") ? f.path : "file://" + f.path;
+    
+    // Format path using https://localfile stream interceptor to bypass Android WebView file access restrictions
+    let cleanPath = f.path.replace(/^file:\/\//, '');
+    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+    const fileUrl = "https://localfile" + cleanPath;
 
-    if (f.isAudio) {
+    if (f.isAudio || f.name.toLowerCase().endsWith('.mp3')) {
       inappVideo.style.display = 'none';
       inappVideo.pause();
       inappAudio.src = fileUrl;
       inappAudio.style.display = 'block';
-      inappAudio.play().catch(() => {});
+      inappAudio.play().catch(() => {
+        if (window.AndroidBridge && window.AndroidBridge.openFile) {
+          window.AndroidBridge.openFile(f.path);
+        }
+      });
     } else {
       inappAudio.style.display = 'none';
       inappAudio.pause();
       inappVideo.src = fileUrl;
       inappVideo.style.display = 'block';
-      inappVideo.play().catch(() => {});
+      inappVideo.play().catch(() => {
+        if (window.AndroidBridge && window.AndroidBridge.openFile) {
+          window.AndroidBridge.openFile(f.path);
+        }
+      });
     }
 
     playerModal.style.display = 'flex';

@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.5
+- **Fixed HTML5 Media Playback Error**: Added `localfile` scheme stream interceptor in `MainActivity.java` to bypass Android WebView file origin restrictions.
+- **Automatic Player Fallback**: In-app media player automatically delegates to external system player if video playback encounters unsupported codecs.
+- **Stream Headers**: Added `Access-Control-Allow-Origin` and `Accept-Ranges` bytes headers for smooth video seeking and playback.
+
 ## Version 1.0.4
 - **Auto-Update Installer**: Built-in 1-click update checker and installer that automatically detects new releases on GitHub, downloads `ytd.apk`, and launches the Android Package Installer.
 - **Dynamic App Version Sync**: Web UI Settings tab dynamically syncs and displays the exact installed version (`v1.0.4 Pro Edition`).

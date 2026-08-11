@@ -108,6 +108,34 @@ public class MainActivity extends Activity {
                     pendingShareUrl = null;
                 }
             }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                if (request != null && request.getUrl() != null) {
+                    android.net.Uri uri = request.getUrl();
+                    String host = uri.getHost();
+                    String scheme = uri.getScheme();
+                    if ("localfile".equals(host) || "localfile".equals(scheme)) {
+                        try {
+                            String filePath = uri.getPath();
+                            if (filePath != null) {
+                                java.io.File file = new java.io.File(filePath);
+                                if (file.exists()) {
+                                    String mime = filePath.toLowerCase().endsWith(".mp3") ? "audio/mpeg" : "video/mp4";
+                                    java.io.FileInputStream fis = new java.io.FileInputStream(file);
+                                    java.util.Map<String, String> headers = new java.util.HashMap<>();
+                                    headers.put("Access-Control-Allow-Origin", "*");
+                                    headers.put("Accept-Ranges", "bytes");
+                                    return new WebResourceResponse(mime, "UTF-8", 200, "OK", headers, fis);
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
         });
 
         webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
