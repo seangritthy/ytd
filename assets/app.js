@@ -354,8 +354,9 @@
 
   window.onDownloadError = function(id, error) {
     const card = document.getElementById('dl-' + id);
+    let cleanErr = error ? error.replace(/^Download failed:\s*/i, '') : "Unknown error";
     if (card) {
-      card.innerHTML = `<div class="dl-header" style="color:#EF4444;">Download Failed: ${error}</div>`;
+      card.innerHTML = `<div class="dl-header" style="color:#EF4444;">Download Error: ${cleanErr}</div>`;
     }
   };
 

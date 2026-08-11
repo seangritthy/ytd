@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.12
+- **Fixed HTML / 0 Bytes Error Reporting**: Resolved 0 bytes reporting bug by capturing true file size before deletion and rejecting `text/html` responses.
+- **Web Sniffer HTML Fallback**: Automatically prompts user to load video link in built-in Web Sniffer when non-direct media pages are returned.
+- **Clean UI Toast Error Messages**: Standardized error string formatting in `DownloadService.java` and `assets/app.js`.
+
 ## Version 1.0.11
 - **Fixed Fake / Truncated 600KB Downloads**: Fixed URL target selection in `DownloadService.java` so `yt-dlp` receives original video page URLs instead of direct expiring stream links.
 - **Strict Stream Validation**: Rejects incomplete or truncated video files (< 1MB) and automatically cleans up partial downloads.

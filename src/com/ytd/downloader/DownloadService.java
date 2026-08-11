@@ -169,8 +169,9 @@ public class DownloadService {
                 redirectCount++;
             }
 
-            if (responseCode >= 400) {
-                throw new Exception("HTTP Error " + responseCode + " - Link expired or restricted");
+            String contentType = connection.getContentType();
+            if (contentType != null && contentType.toLowerCase().contains("text/html")) {
+                throw new Exception("HTML page returned instead of video stream. Use Web Sniffer to download stream.");
             }
 
             int fileLength = connection.getContentLength();
@@ -200,12 +201,13 @@ public class DownloadService {
 
             if (fileLength > 0 && total < fileLength) {
                 outputFile.delete();
-                throw new Exception("Download incomplete: received " + total + " of " + fileLength + " bytes");
+                throw new Exception("Download incomplete: received " + formatFileSize(total) + " of " + formatFileSize(fileLength));
             }
 
-            if (outputFile.length() < 1000000 && !outputFile.getName().endsWith(".apk") && !outputFile.getName().endsWith(".mp3")) {
+            long actualSize = outputFile.length();
+            if (actualSize < 1000000 && !outputFile.getName().endsWith(".apk") && !outputFile.getName().endsWith(".mp3")) {
                 outputFile.delete();
-                throw new Exception("Download rejected: Invalid video file size (" + outputFile.length() + " bytes)");
+                throw new Exception("Stream restricted or invalid file size (" + formatFileSize(actualSize) + ")");
             }
 
             MediaScannerConnection.scanFile(context, new String[]{outputFile.getAbsolutePath()}, null, null);
@@ -215,7 +217,10 @@ public class DownloadService {
             if (outputFile.exists() && outputFile.length() < 2000000 && !outputFile.getName().endsWith(".apk")) {
                 outputFile.delete();
             }
-            listener.onError(downloadId, "Download failed: " + e.getMessage());
+            String msg = e.getMessage();
+            if (msg == null) msg = "Unknown connection error";
+            if (msg.startsWith("Download failed: ")) msg = msg.substring(17);
+            listener.onError(downloadId, msg);
         } finally {
             try {
                 if (output != null) output.close();
