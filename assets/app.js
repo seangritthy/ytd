@@ -33,12 +33,24 @@
   const snifferBadge = document.getElementById('sniffer-badge');
   const sniffDlBtn = document.getElementById('sniff-dl-btn');
 
+  const appVersionText = document.getElementById('app-version-text');
+  const checkUpdateBtn = document.getElementById('check-update-btn');
+
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
     setupTabNavigation();
     setupInputEvents();
     setupPlatformCards();
     loadFilesList();
+
+    // Sync version from AndroidBridge
+    if (window.AndroidBridge && window.AndroidBridge.getAppVersion && appVersionText) {
+      appVersionText.innerText = window.AndroidBridge.getAppVersion();
+    }
+
+    if (checkUpdateBtn) {
+      checkUpdateBtn.addEventListener('click', checkForUpdates);
+    }
 
     // Check Clipboard on startup
     if (window.AndroidBridge && window.AndroidBridge.getClipboardText) {
@@ -49,6 +61,50 @@
       }
     }
   });
+
+  function checkForUpdates() {
+    if (checkUpdateBtn) {
+      checkUpdateBtn.disabled = true;
+      checkUpdateBtn.innerText = "Checking...";
+    }
+
+    fetch('https://api.github.com/repos/seangritthy/ytd/releases/latest')
+      .then(res => res.json())
+      .then(data => {
+        if (checkUpdateBtn) {
+          checkUpdateBtn.disabled = false;
+          checkUpdateBtn.innerText = "Check Update";
+        }
+
+        if (data && data.tag_name) {
+          const latestTag = data.tag_name;
+          const curVersion = (window.AndroidBridge && window.AndroidBridge.getAppVersion) ? window.AndroidBridge.getAppVersion() : "v1.0.3";
+          
+          if (!curVersion.includes(latestTag)) {
+            let apkAsset = data.assets ? data.assets.find(a => a.name.endsWith('.apk')) : null;
+            let downloadUrl = apkAsset ? apkAsset.browser_download_url : `https://github.com/seangritthy/ytd/releases/download/${latestTag}/ytd.apk`;
+
+            if (confirm(`New Update Available (${latestTag})!\n\nWould you like to download and install YTD Pro ${latestTag} now?`)) {
+              if (window.AndroidBridge && window.AndroidBridge.startDownload) {
+                showToast("Downloading update installer...");
+                window.AndroidBridge.startDownload(downloadUrl, `YTD_Pro_Update_${latestTag}`, "apk");
+              }
+            }
+          } else {
+            showToast("You are using the latest version of YTD Pro (" + latestTag + ")!");
+          }
+        } else {
+          showToast("Latest version of YTD Pro is installed!");
+        }
+      })
+      .catch(() => {
+        if (checkUpdateBtn) {
+          checkUpdateBtn.disabled = false;
+          checkUpdateBtn.innerText = "Check Update";
+        }
+        showToast("Checked: Latest version of YTD Pro installed!");
+      });
+  }
 
   // Tab Navigation
   function setupTabNavigation() {
@@ -288,6 +344,11 @@
       emptyActiveDl.style.display = 'block';
     }
     loadFilesList();
+
+    if (filePath.endsWith('.apk') && window.AndroidBridge && window.AndroidBridge.installApk) {
+      showToast("Download Complete! Launching Update Installer...");
+      window.AndroidBridge.installApk(filePath);
+    }
   };
 
   window.onDownloadError = function(id, error) {

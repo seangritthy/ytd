@@ -241,6 +241,20 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String getAppVersion() {
+            try {
+                return "v" + getPackageManager().getPackageInfo(getPackageName(), 0).versionName + " Pro Edition";
+            } catch (Exception e) {
+                return "v1.0.3 Pro Edition";
+            }
+        }
+
+        @JavascriptInterface
+        public void installApk(String path) {
+            downloadService.installApk(path);
+        }
+
+        @JavascriptInterface
         public void showToast(String message) {
             Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
         }

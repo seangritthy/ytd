@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.4
+- **Auto-Update Installer**: Built-in 1-click update checker and installer that automatically detects new releases on GitHub, downloads `ytd.apk`, and launches the Android Package Installer.
+- **Dynamic App Version Sync**: Web UI Settings tab dynamically syncs and displays the exact installed version (`v1.0.4 Pro Edition`).
+- **REQUEST_INSTALL_PACKAGES Permission**: Added Android package installer permission for seamless in-app updating.
+
 ## Version 1.0.3
 - **Integrated yt-dlp Extraction Engine**: Full support for YouTube live streams (`/live/`), Shorts (`/shorts/`), Facebook, TikTok, Instagram, Twitter/X, and multi-site video streams.
 - **Fixed Fake File Downloads**: Resolves small 1.2MB image downloads on YouTube live links by fetching real `.googlevideo.com` media streams (up to 370MB+).

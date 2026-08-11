@@ -28,8 +28,12 @@ public class YtdFileProvider extends ContentProvider {
     @Override
     public String getType(Uri uri) {
         String path = uri.getPath();
-        if (path != null && path.endsWith(".mp3")) {
-            return "audio/mpeg";
+        if (path != null) {
+            if (path.endsWith(".apk")) {
+                return "application/vnd.android.package-archive";
+            } else if (path.endsWith(".mp3")) {
+                return "audio/mpeg";
+            }
         }
         return "video/mp4";
     }

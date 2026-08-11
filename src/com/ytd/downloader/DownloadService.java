@@ -169,6 +169,11 @@ public class DownloadService {
                 return;
             }
 
+            if (path.endsWith(".apk")) {
+                installApk(path);
+                return;
+            }
+
             Uri contentUri = Uri.parse("content://com.ytd.downloader.fileprovider" + file.getAbsolutePath());
             String mimeType = file.getName().toLowerCase().endsWith(".mp3") ? "audio/*" : "video/*";
 
@@ -179,6 +184,25 @@ public class DownloadService {
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(context, "Cannot open file externally: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void installApk(String path) {
+        try {
+            File file = new File(path);
+            if (!file.exists()) {
+                Toast.makeText(context, "APK file not found", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Uri apkUri = Uri.parse("content://com.ytd.downloader.fileprovider" + file.getAbsolutePath());
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(context, "Failed to launch installer: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
