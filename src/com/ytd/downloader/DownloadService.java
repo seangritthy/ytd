@@ -171,7 +171,7 @@ public class DownloadService {
             input = connection.getInputStream();
             output = new FileOutputStream(outputFile);
 
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[16384];
             long total = 0;
             int count;
             long lastUpdate = System.currentTimeMillis();

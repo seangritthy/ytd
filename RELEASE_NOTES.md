@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.9
+- **High-Speed Stream Buffer**: Upgraded stream download buffer to 16KB in `DownloadService.java` for faster download throughput on large video files.
+- **Improved YouTube Stream Extractor**: Optimized format prioritization in `VideoExtractor.java` to favor combined audio/video streams and clean quality labels.
+- **Version Sync v1.0.9**: Updated version string across manifest, Java bridge, build scripts, and GitHub releases.
+
 ## Version 1.0.8
 - **Enhanced In-App Package Installer & ContentProvider**: Implemented OpenableColumns query interface in `YtdFileProvider.java` for seamless Android PackageInstaller compatibility.
 - **HTTP 301/302 Redirect Loop Engine**: Added multi-redirect handling in `DownloadService.java` to support GitHub release CDN links (`objects.githubusercontent.com`).
