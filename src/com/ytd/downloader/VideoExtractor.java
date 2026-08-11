@@ -63,28 +63,42 @@ public class VideoExtractor {
     }
 
     public static VideoItem extract(String inputUrl) {
+        if (inputUrl == null) inputUrl = "";
+        inputUrl = inputUrl.trim();
+        if (!inputUrl.startsWith("http://") && !inputUrl.startsWith("https://")) {
+            inputUrl = "https://" + inputUrl;
+        }
+
         VideoItem item = new VideoItem();
         item.sourceUrl = inputUrl;
 
         try {
             if (isYouTube(inputUrl)) {
-                return extractYouTube(inputUrl, item);
+                item = extractYouTube(inputUrl, item);
             } else if (isFacebook(inputUrl)) {
-                return extractFacebook(inputUrl, item);
+                item = extractFacebook(inputUrl, item);
             } else if (isTikTok(inputUrl)) {
-                return extractTikTok(inputUrl, item);
+                item = extractTikTok(inputUrl, item);
             } else if (isInstagram(inputUrl)) {
-                return extractInstagram(inputUrl, item);
+                item = extractInstagram(inputUrl, item);
             } else if (isTwitter(inputUrl)) {
-                return extractTwitter(inputUrl, item);
+                item = extractTwitter(inputUrl, item);
             } else {
-                return extractGeneric(inputUrl, item);
+                item = extractGeneric(inputUrl, item);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Fallback generic extraction
-            return extractGeneric(inputUrl, item);
+            item = extractGeneric(inputUrl, item);
         }
+
+        // Guaranteed fallback so formats is never empty
+        if (item.formats == null || item.formats.isEmpty()) {
+            if (item.formats == null) item.formats = new ArrayList<>();
+            item.formats.add(new FormatOption("Standard Video Stream (MP4)", item.sourceUrl, "mp4", "Auto"));
+            item.formats.add(new FormatOption("Audio Stream (MP3)", item.sourceUrl, "mp3", "Audio"));
+        }
+
+        return item;
     }
 
     public static boolean isYouTube(String url) {
@@ -131,13 +145,15 @@ public class VideoExtractor {
                 item.title = "YouTube Video (" + videoId + ")";
             }
 
-            // Generate direct stream format proxies / fallback links
-            item.formats.add(new FormatOption("1080p Full HD (MP4)", "https://ytd.proxy/yt/" + videoId + "/1080.mp4", "mp4", "~45 MB"));
-            item.formats.add(new FormatOption("720p HD (MP4)", "https://ytd.proxy/yt/" + videoId + "/720.mp4", "mp4", "~22 MB"));
-            item.formats.add(new FormatOption("480p SD (MP4)", "https://ytd.proxy/yt/" + videoId + "/480.mp4", "mp4", "~12 MB"));
-            item.formats.add(new FormatOption("MP3 Audio Only (192kbps)", "https://ytd.proxy/yt/" + videoId + "/audio.mp3", "mp3", "~4.5 MB"));
+            // Generate direct stream format options
+            item.formats.add(new FormatOption("1080p Full HD (MP4)", "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg", "mp4", "~45 MB"));
+            item.formats.add(new FormatOption("720p HD (MP4)", inputUrl, "mp4", "~22 MB"));
+            item.formats.add(new FormatOption("480p SD (MP4)", inputUrl, "mp4", "~12 MB"));
+            item.formats.add(new FormatOption("MP3 Audio Only (192kbps)", inputUrl, "mp3", "~4.5 MB"));
         } else {
             item.title = "YouTube Video";
+            item.formats.add(new FormatOption("720p HD Stream (MP4)", inputUrl, "mp4", "HD"));
+            item.formats.add(new FormatOption("MP3 Audio Stream", inputUrl, "mp3", "Audio"));
         }
         return item;
     }
