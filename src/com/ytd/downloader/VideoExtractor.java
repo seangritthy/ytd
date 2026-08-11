@@ -72,23 +72,33 @@ public class VideoExtractor {
         VideoItem item = new VideoItem();
         item.sourceUrl = inputUrl;
 
+        // Step 1: High-precision extraction using system yt-dlp engine if available
         try {
-            if (isYouTube(inputUrl)) {
-                item = extractYouTube(inputUrl, item);
-            } else if (isFacebook(inputUrl)) {
-                item = extractFacebook(inputUrl, item);
-            } else if (isTikTok(inputUrl)) {
-                item = extractTikTok(inputUrl, item);
-            } else if (isInstagram(inputUrl)) {
-                item = extractInstagram(inputUrl, item);
-            } else if (isTwitter(inputUrl)) {
-                item = extractTwitter(inputUrl, item);
-            } else {
-                item = extractGeneric(inputUrl, item);
-            }
+            item = extractYtDlp(inputUrl, item);
         } catch (Exception e) {
             e.printStackTrace();
-            item = extractGeneric(inputUrl, item);
+        }
+
+        // Step 2: Native scrapers fallback if yt-dlp is unavailable or returns no formats
+        if (item.formats == null || item.formats.isEmpty()) {
+            try {
+                if (isYouTube(inputUrl)) {
+                    item = extractYouTube(inputUrl, item);
+                } else if (isFacebook(inputUrl)) {
+                    item = extractFacebook(inputUrl, item);
+                } else if (isTikTok(inputUrl)) {
+                    item = extractTikTok(inputUrl, item);
+                } else if (isInstagram(inputUrl)) {
+                    item = extractInstagram(inputUrl, item);
+                } else if (isTwitter(inputUrl)) {
+                    item = extractTwitter(inputUrl, item);
+                } else {
+                    item = extractGeneric(inputUrl, item);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                item = extractGeneric(inputUrl, item);
+            }
         }
 
         // Guaranteed fallback so formats is never empty
@@ -98,6 +108,67 @@ public class VideoExtractor {
             item.formats.add(new FormatOption("Audio Stream (MP3)", item.sourceUrl, "mp3", "Audio"));
         }
 
+        return item;
+    }
+
+    private static VideoItem extractYtDlp(String inputUrl, VideoItem item) {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{
+                "python3", "-m", "yt_dlp", "--dump-single-json", "--no-warnings", "--no-playlist", inputUrl
+            });
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                if (sb.length() > 2000000) break; // cap at 2MB json
+            }
+            process.waitFor();
+
+            String jsonStr = sb.toString().trim();
+            if (!jsonStr.isEmpty() && jsonStr.startsWith("{")) {
+                JSONObject json = new JSONObject(jsonStr);
+                if (json.has("title")) item.title = json.getString("title");
+                if (json.has("thumbnail")) item.thumbnail = json.getString("thumbnail");
+                if (json.has("extractor_key")) item.platform = json.getString("extractor_key");
+
+                if (json.has("formats")) {
+                    JSONArray fmts = json.getJSONArray("formats");
+                    for (int i = fmts.length() - 1; i >= 0; i--) {
+                        JSONObject f = fmts.getJSONObject(i);
+                        if (f.has("url")) {
+                            String streamUrl = f.getString("url");
+                            String formatNote = f.optString("format_note", f.optString("resolution", "SD"));
+                            String ext = f.optString("ext", "mp4");
+                            long filesize = f.optLong("filesize", f.optLong("filesize_approx", 0));
+                            String sizeStr = filesize > 0 ? String.format("%.1f MB", filesize / (1024.0 * 1024.0)) : "Auto";
+
+                            String qualityLabel = formatNote + " (" + ext.toUpperCase() + ")";
+                            if (f.optInt("height", 0) > 0) {
+                                qualityLabel = f.getInt("height") + "p " + ext.toUpperCase();
+                            }
+
+                            // Avoid duplicate qualities
+                            boolean exists = false;
+                            for (FormatOption existing : item.formats) {
+                                if (existing.quality.equalsIgnoreCase(qualityLabel)) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+
+                            if (!exists) {
+                                item.formats.add(new FormatOption(qualityLabel, streamUrl, ext, sizeStr));
+                            }
+                            if (item.formats.size() >= 6) break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return item;
     }
 
@@ -146,10 +217,9 @@ public class VideoExtractor {
             }
 
             // Generate direct stream format options
-            item.formats.add(new FormatOption("1080p Full HD (MP4)", "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg", "mp4", "~45 MB"));
-            item.formats.add(new FormatOption("720p HD (MP4)", inputUrl, "mp4", "~22 MB"));
-            item.formats.add(new FormatOption("480p SD (MP4)", inputUrl, "mp4", "~12 MB"));
-            item.formats.add(new FormatOption("MP3 Audio Only (192kbps)", inputUrl, "mp3", "~4.5 MB"));
+            item.formats.add(new FormatOption("720p HD (MP4)", inputUrl, "mp4", "HD"));
+            item.formats.add(new FormatOption("480p SD (MP4)", inputUrl, "mp4", "SD"));
+            item.formats.add(new FormatOption("MP3 Audio Only", inputUrl, "mp3", "Audio"));
         } else {
             item.title = "YouTube Video";
             item.formats.add(new FormatOption("720p HD Stream (MP4)", inputUrl, "mp4", "HD"));
@@ -159,7 +229,7 @@ public class VideoExtractor {
     }
 
     private static String extractYouTubeId(String url) {
-        Pattern pattern = Pattern.compile("(?:v=|/videos/|embed/|youtu\\.be/|/shorts/)([^\"&?/\\s]{11})");
+        Pattern pattern = Pattern.compile("(?:v=|/videos/|embed/|youtu\\.be/|/shorts/|/live/)([^\"&?/\\s]{11})");
         Matcher matcher = pattern.matcher(url);
         if (matcher.find()) {
             return matcher.group(1);
@@ -172,24 +242,20 @@ public class VideoExtractor {
         item.title = "Facebook Video";
 
         try {
-            // Fetch webpage content with Desktop User-Agent
             String html = fetchUrlContent(inputUrl, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             
-            // Extract title
             Pattern titlePattern = Pattern.compile("<meta property=\"og:title\" content=\"([^\"]+)\"");
             Matcher titleMatcher = titlePattern.matcher(html);
             if (titleMatcher.find()) {
                 item.title = titleMatcher.group(1);
             }
 
-            // Extract thumbnail
             Pattern thumbPattern = Pattern.compile("<meta property=\"og:image\" content=\"([^\"]+)\"");
             Matcher thumbMatcher = thumbPattern.matcher(html);
             if (thumbMatcher.find()) {
                 item.thumbnail = thumbMatcher.group(1).replace("&amp;", "&");
             }
 
-            // Extract HD URL
             Pattern hdPattern = Pattern.compile("(?:hd_src|browser_native_hd_url):\"([^\"]+)\"");
             Matcher hdMatcher = hdPattern.matcher(html);
             if (hdMatcher.find()) {
@@ -197,22 +263,11 @@ public class VideoExtractor {
                 item.formats.add(new FormatOption("HD Quality (MP4)", hdUrl, "mp4", "HD"));
             }
 
-            // Extract SD URL
             Pattern sdPattern = Pattern.compile("(?:sd_src|browser_native_sd_url):\"([^\"]+)\"");
             Matcher sdMatcher = sdPattern.matcher(html);
             if (sdMatcher.find()) {
                 String sdUrl = sdMatcher.group(1).replace("\\/", "/").replace("&amp;", "&");
                 item.formats.add(new FormatOption("SD Quality (MP4)", sdUrl, "mp4", "SD"));
-            }
-
-            // Extract og:video
-            if (item.formats.isEmpty()) {
-                Pattern ogVidPattern = Pattern.compile("<meta property=\"og:video\" content=\"([^\"]+)\"");
-                Matcher ogVidMatcher = ogVidPattern.matcher(html);
-                if (ogVidMatcher.find()) {
-                    String vidUrl = ogVidMatcher.group(1).replace("&amp;", "&");
-                    item.formats.add(new FormatOption("Standard Video (MP4)", vidUrl, "mp4", "Standard"));
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -326,7 +381,6 @@ public class VideoExtractor {
                 item.thumbnail = thumbMatcher.group(1).replace("&amp;", "&");
             }
 
-            // Find all .mp4 / .m3u8 / .webm links in HTML
             Pattern srcPattern = Pattern.compile("(https?://[^\"]+?\\.(?:mp4|m3u8|webm))");
             Matcher srcMatcher = srcPattern.matcher(html);
             int count = 1;
@@ -367,7 +421,7 @@ public class VideoExtractor {
             String line;
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
-                if (sb.length() > 500000) break; // cap at ~500KB
+                if (sb.length() > 500000) break;
             }
             reader.close();
             conn.disconnect();

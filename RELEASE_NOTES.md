@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.3
+- **Integrated yt-dlp Extraction Engine**: Full support for YouTube live streams (`/live/`), Shorts (`/shorts/`), Facebook, TikTok, Instagram, Twitter/X, and multi-site video streams.
+- **Fixed Fake File Downloads**: Resolves small 1.2MB image downloads on YouTube live links by fetching real `.googlevideo.com` media streams (up to 370MB+).
+- **Exact Metadata & Real File Sizes**: Displays exact video titles, real thumbnails, and accurate stream file sizes before downloading.
+
 ## Version 1.0.2
 - **In-App Media Player**: Built-in full-screen video and audio player modal directly in the app (plays any downloaded file instantly without needing external apps).
 - **YtdFileProvider Integration**: Added ContentProvider URI support and read permissions for external player apps.
