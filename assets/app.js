@@ -161,9 +161,10 @@
       const videoUrl = selectedFmt.url;
       const title = currentVideoData.title || "Video";
       const format = selectedFmt.type || "mp4";
+      const pageUrl = selectedFmt.pageUrl || currentVideoData.sourceUrl || videoUrl;
 
       if (window.AndroidBridge && window.AndroidBridge.startDownload) {
-        window.AndroidBridge.startDownload(videoUrl, title, format);
+        window.AndroidBridge.startDownload(videoUrl, title, format, pageUrl);
         showToast("Download Started!");
         videoResultCard.style.display = 'none';
         urlInput.value = '';

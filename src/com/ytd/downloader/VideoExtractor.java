@@ -35,6 +35,7 @@ public class VideoExtractor {
                     JSONObject fmtJson = new JSONObject();
                     fmtJson.put("quality", f.quality);
                     fmtJson.put("url", f.url);
+                    fmtJson.put("pageUrl", f.pageUrl != null ? f.pageUrl : sourceUrl);
                     fmtJson.put("type", f.type); // "mp4", "mp3", "m3u8"
                     fmtJson.put("size", f.size);
                     fmtArray.put(fmtJson);
@@ -51,12 +52,18 @@ public class VideoExtractor {
     public static class FormatOption {
         public String quality;
         public String url;
+        public String pageUrl;
         public String type;
         public String size;
 
         public FormatOption(String quality, String url, String type, String size) {
+            this(quality, url, url, type, size);
+        }
+
+        public FormatOption(String quality, String url, String pageUrl, String type, String size) {
             this.quality = quality;
             this.url = url;
+            this.pageUrl = pageUrl;
             this.type = type;
             this.size = size;
         }
@@ -159,7 +166,7 @@ public class VideoExtractor {
                             }
 
                             if (!exists) {
-                                item.formats.add(new FormatOption(qualityLabel, streamUrl, ext, sizeStr));
+                                item.formats.add(new FormatOption(qualityLabel, streamUrl, inputUrl, ext, sizeStr));
                             }
                             if (item.formats.size() >= 6) break;
                         }

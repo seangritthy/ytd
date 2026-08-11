@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.11
+- **Fixed Fake / Truncated 600KB Downloads**: Fixed URL target selection in `DownloadService.java` so `yt-dlp` receives original video page URLs instead of direct expiring stream links.
+- **Strict Stream Validation**: Rejects incomplete or truncated video files (< 1MB) and automatically cleans up partial downloads.
+- **Page URL Bridge Sync**: Added `pageUrl` passing across JavaScript bridge, `MainActivity.java`, and `DownloadService.java`.
+
 ## Version 1.0.10
 - **Playlist & Batch Link Recognition**: Added playlist and channel link parsing support (`playlist?list=`, `/shorts/`, `/live/`) in `VideoExtractor.java`.
 - **Enhanced Media Extractor**: Expanded multi-site support for Vimeo, Dailymotion, TikTok, Instagram Reels, and Twitter/X streams.

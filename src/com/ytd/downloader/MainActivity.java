@@ -192,8 +192,13 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void startDownload(final String videoUrl, final String title, final String format) {
+            startDownload(videoUrl, title, format, videoUrl);
+        }
+
+        @JavascriptInterface
+        public void startDownload(final String videoUrl, final String title, final String format, final String pageUrl) {
             final String downloadId = UUID.randomUUID().toString();
-            downloadService.startDownload(downloadId, videoUrl, title, format, new DownloadService.DownloadListener() {
+            downloadService.startDownload(downloadId, videoUrl, title, format, pageUrl, new DownloadService.DownloadListener() {
                 @Override
                 public void onProgress(final String id, final int progress, final long bytesDownloaded, final long totalBytes, final String status) {
                     mainHandler.post(new Runnable() {
@@ -273,7 +278,7 @@ public class MainActivity extends Activity {
             try {
                 return "v" + getPackageManager().getPackageInfo(getPackageName(), 0).versionName + " Pro Edition";
             } catch (Exception e) {
-                return "v1.0.10 Pro Edition";
+                return "v1.0.11 Pro Edition";
             }
         }
 

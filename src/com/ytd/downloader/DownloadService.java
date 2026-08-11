@@ -46,6 +46,10 @@ public class DownloadService {
     }
 
     public void startDownload(final String downloadId, final String videoUrl, final String title, final String format, final DownloadListener listener) {
+        startDownload(downloadId, videoUrl, title, format, videoUrl, listener);
+    }
+
+    public void startDownload(final String downloadId, final String videoUrl, final String title, final String format, final String pageUrl, final DownloadListener listener) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -67,7 +71,7 @@ public class DownloadService {
                     if (videoUrl.startsWith("http://") || videoUrl.startsWith("https://")) {
                         boolean success = false;
                         if (!"apk".equalsIgnoreCase(ext)) {
-                            success = downloadWithYtDlp(downloadId, videoUrl, outputFile, listener);
+                            success = downloadWithYtDlp(downloadId, videoUrl, pageUrl, outputFile, listener);
                         }
                         if (!success) {
                             downloadWithURLConnection(downloadId, videoUrl, outputFile, listener);
@@ -82,8 +86,10 @@ public class DownloadService {
         });
     }
 
-    private boolean downloadWithYtDlp(String downloadId, String videoUrl, File outputFile, DownloadListener listener) {
+    private boolean downloadWithYtDlp(String downloadId, String videoUrl, String pageUrl, File outputFile, DownloadListener listener) {
         try {
+            String targetUrl = (pageUrl != null && (pageUrl.contains("youtube.com") || pageUrl.contains("youtu.be") || pageUrl.contains("facebook.com") || pageUrl.contains("tiktok.com") || pageUrl.contains("instagram.com") || pageUrl.contains("twitter.com") || pageUrl.contains("x.com"))) ? pageUrl : videoUrl;
+
             List<String> cmd = new ArrayList<>();
             cmd.add("python3");
             cmd.add("-m");
@@ -93,7 +99,7 @@ public class DownloadService {
             cmd.add("best[ext=mp4]/best");
             cmd.add("-o");
             cmd.add(outputFile.getAbsolutePath());
-            cmd.add(videoUrl);
+            cmd.add(targetUrl);
 
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
@@ -192,16 +198,21 @@ public class DownloadService {
             output.close();
             input.close();
 
-            if (outputFile.length() < 10000 && !outputFile.getName().endsWith(".apk")) {
+            if (fileLength > 0 && total < fileLength) {
                 outputFile.delete();
-                throw new Exception("Download failed: Received invalid stream data (" + outputFile.length() + " bytes)");
+                throw new Exception("Download incomplete: received " + total + " of " + fileLength + " bytes");
+            }
+
+            if (outputFile.length() < 1000000 && !outputFile.getName().endsWith(".apk") && !outputFile.getName().endsWith(".mp3")) {
+                outputFile.delete();
+                throw new Exception("Download rejected: Invalid video file size (" + outputFile.length() + " bytes)");
             }
 
             MediaScannerConnection.scanFile(context, new String[]{outputFile.getAbsolutePath()}, null, null);
             listener.onComplete(downloadId, outputFile.getAbsolutePath());
         } catch (Exception e) {
             e.printStackTrace();
-            if (outputFile.exists() && outputFile.length() < 50000 && !outputFile.getName().endsWith(".apk")) {
+            if (outputFile.exists() && outputFile.length() < 2000000 && !outputFile.getName().endsWith(".apk")) {
                 outputFile.delete();
             }
             listener.onError(downloadId, "Download failed: " + e.getMessage());
