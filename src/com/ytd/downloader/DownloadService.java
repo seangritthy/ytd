@@ -1,6 +1,5 @@
 package com.ytd.downloader;
 
-import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaScannerConnection;
@@ -12,13 +11,19 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DownloadService {
 
@@ -58,10 +63,15 @@ public class DownloadService {
                     }
 
                     File outputFile = new File(downloadDir, sanitizedTitle + "_" + System.currentTimeMillis() + "." + ext);
-                    
-                    // Fallback to DownloadManager for standard URLs if system permits
+
                     if (videoUrl.startsWith("http://") || videoUrl.startsWith("https://")) {
-                        downloadWithURLConnection(downloadId, videoUrl, outputFile, listener);
+                        boolean success = false;
+                        if (!"apk".equalsIgnoreCase(ext)) {
+                            success = downloadWithYtDlp(downloadId, videoUrl, outputFile, listener);
+                        }
+                        if (!success) {
+                            downloadWithURLConnection(downloadId, videoUrl, outputFile, listener);
+                        }
                     } else {
                         listener.onError(downloadId, "Invalid media URL scheme");
                     }
@@ -70,6 +80,53 @@ public class DownloadService {
                 }
             }
         });
+    }
+
+    private boolean downloadWithYtDlp(String downloadId, String videoUrl, File outputFile, DownloadListener listener) {
+        try {
+            List<String> cmd = new ArrayList<>();
+            cmd.add("python3");
+            cmd.add("-m");
+            cmd.add("yt_dlp");
+            cmd.add("--no-warnings");
+            cmd.add("-f");
+            cmd.add("best[ext=mp4]/best");
+            cmd.add("-o");
+            cmd.add(outputFile.getAbsolutePath());
+            cmd.add(videoUrl);
+
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            Pattern progressPattern = Pattern.compile("\\[download\\]\\s+([0-9.]+)%");
+            long lastNotify = 0;
+
+            while ((line = reader.readLine()) != null) {
+                Matcher m = progressPattern.matcher(line);
+                if (m.find()) {
+                    float pct = Float.parseFloat(m.group(1));
+                    int progress = (int) pct;
+                    long now = System.currentTimeMillis();
+                    if (now - lastNotify > 300) {
+                        lastNotify = now;
+                        listener.onProgress(downloadId, progress, (long)(progress * 1000000L), 100000000L, "Downloading Video");
+                    }
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0 && outputFile.exists() && outputFile.length() > 50000) {
+                MediaScannerConnection.scanFile(context, new String[]{outputFile.getAbsolutePath()}, null, null);
+                listener.onComplete(downloadId, outputFile.getAbsolutePath());
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private void downloadWithURLConnection(String downloadId, String videoUrl, File outputFile, DownloadListener listener) {
@@ -82,8 +139,15 @@ public class DownloadService {
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(15000);
             connection.setReadTimeout(30000);
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+            connection.setRequestProperty("Accept", "*/*");
+            connection.setRequestProperty("Connection", "keep-alive");
             connection.connect();
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode >= 400) {
+                throw new Exception("HTTP Error " + responseCode + " - Link expired or restricted");
+            }
 
             int fileLength = connection.getContentLength();
             input = connection.getInputStream();
@@ -99,7 +163,7 @@ public class DownloadService {
                 output.write(buffer, 0, count);
 
                 long now = System.currentTimeMillis();
-                if (now - lastUpdate > 300) { // Update UI every 300ms
+                if (now - lastUpdate > 300) {
                     lastUpdate = now;
                     int progress = fileLength > 0 ? (int) (total * 100 / fileLength) : 0;
                     listener.onProgress(downloadId, progress, total, fileLength, "Downloading");
@@ -110,12 +174,18 @@ public class DownloadService {
             output.close();
             input.close();
 
-            // Scan media file so it shows in Gallery / Music Player
-            MediaScannerConnection.scanFile(context, new String[]{outputFile.getAbsolutePath()}, null, null);
+            if (outputFile.length() < 10000 && !outputFile.getName().endsWith(".apk")) {
+                outputFile.delete();
+                throw new Exception("Download failed: Received invalid stream data (" + outputFile.length() + " bytes)");
+            }
 
+            MediaScannerConnection.scanFile(context, new String[]{outputFile.getAbsolutePath()}, null, null);
             listener.onComplete(downloadId, outputFile.getAbsolutePath());
         } catch (Exception e) {
             e.printStackTrace();
+            if (outputFile.exists() && outputFile.length() < 50000 && !outputFile.getName().endsWith(".apk")) {
+                outputFile.delete();
+            }
             listener.onError(downloadId, "Download failed: " + e.getMessage());
         } finally {
             try {

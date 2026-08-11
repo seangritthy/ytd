@@ -1,5 +1,10 @@
 # YTD Video Downloader - Release Notes
 
+## Version 1.0.7
+- **High-Speed Native Downloader Engine**: Integrated native background `yt-dlp` downloader into `DownloadService.java` for high-speed multi-threaded video downloads (300MB+ movies).
+- **HTTP Error & Fake File Rejection**: Automatically rejects HTTP 403 / 400 error HTML pages (~1.1 MB) and deletes invalid stream files.
+- **Live Progress & Speed Metrics**: Displays real-time download percentage, transfer speed (MB/s), and true file size in active downloads.
+
 ## Version 1.0.6
 - **Fixed Update APK File Extension**: Corrected `DownloadService` file extension selection so update installers save as `.apk` files instead of `.mp4`.
 - **Unknown Sources Permission Handler**: Automatically opens Android `ACTION_MANAGE_UNKNOWN_APP_SOURCES` settings screen if unknown sources permission is needed for installation.

@@ -67,8 +67,8 @@ apksigner sign \
     --out ytd.apk \
     build/app-aligned.apk
 
-cp ytd.apk ytd-v1.0.6.apk
+cp ytd.apk ytd-v1.0.7.apk
 
 echo "=== BUILD SUCCESSFUL ==="
 echo "APK Output Path: $APP_DIR/ytd.apk"
-ls -lh ytd.apk ytd-v1.0.6.apk
+ls -lh ytd.apk ytd-v1.0.7.apk
