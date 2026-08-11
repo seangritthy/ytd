@@ -9,3 +9,5 @@ libs/android.jar
 debug.keystore
 .DS_Store
 *.log
+scratch/
+
