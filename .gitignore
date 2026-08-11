@@ -1,0 +1,11 @@
+# Build artifacts
+build/
+bin/
+gen/
+obj/
+libs/android.jar
+*.apk
+*.idsig
+debug.keystore
+.DS_Store
+*.log
